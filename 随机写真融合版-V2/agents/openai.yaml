@@ -1,0 +1,13 @@
+interface:
+  display_name: "随机写真融合 Pro"
+  short_description: "多风格成人女性写真导演卡、身份锁定与语义去重批量随机生成"
+  default_prompt: "Use $random-portrait-fusion-pro to generate a genuinely varied portrait director-card batch from my reference images."
+  icon_small: "assets/icon.svg"
+  icon_large: "assets/icon.svg"
+policy:
+  products:
+  - "chatgpt"
+  - "codex"
+  - "api"
+  - "atlas"
+  allow_implicit_invocation: true

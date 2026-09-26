@@ -1,97 +1,132 @@
 ---
-name: 随机写真融合版-V2
-description: 成年人物导演式真人写真提示词系统。使用本 Skill 的 references 目录按需加载人物、姿态、服装场景、摄影语言与成像规则。
+name: random-portrait-fusion-pro
+description: Generate long-form director-card prompts for realistic portraits of an explicitly adult female character, locking identity to a multi-angle reference and varying location, activity, outfit, optional hosiery, artistic finish, light and camera. Use for 随机写真、导演卡、角色一致性、旅行途中做事、画室或舞蹈室、镜前拍摄、花影朦胧或对影成三人、车展、漫展COS、末世僵尸、天庭地府龙宫、精灵城矮人城、职业制服 POV, or continuation of this portrait prompt series.
 ---
 
-# 随机写真融合版 V2｜自包含版
+# Random Portrait Fusion Pro
 
-本 Skill 的所有依赖均位于本目录 `references/`。不要再访问 V1 跨目录路径。
+Create production-ready Chinese director cards while preserving the referenced adult character's identity. Treat every depicted person as an adult aged 23 or older. Produce prompts only; do not generate images unless the user separately requests image generation.
 
-## 核心优先级
-用户明确指定 > 成年与安全限定 > Strong Identity Lock / 人物身份一致性 > 参考图职责 > 场景与故事瞬间 > 美姿 > 镜头 > 光线 > 成像系统 > 风格。
+## Load the required references
 
-## Strong Identity Lock｜人物身份一致性
-有参考人物图时，将参考图作为人物身份来源；这是同一个人物换场景拍摄，不是重新设计相似人物。保持可识别的整体面部身份与比例：脸长脸宽、额头比例、脸颊自然宽度与柔软度、眉眼关系、眼型与眼距、鼻部比例、嘴唇轮廓、下颌宽度、下半脸宽度、自然轻微不对称与原始年龄感。不要用冗长的新五官描述与参考图竞争。
+Read these files before composing any card:
 
-摄影风格、妆容、灯光、焦段、服装、Editorial 或电影感只改变照片表现，不得重塑人物脸。禁止自动成熟化、网红脸、明星脸、模板美女脸或为了“更精致”改变五官比例。
+1. `references/人物层.md`
+2. `references/变量池-形象神态.md`
+3. `references/变量池-服装场景.md`
+4. `references/变量池-摄影语言.md`
+5. `references/变量池-导演路线.md`
+6. `references/成像机制原则.md`
+7. `references/人物美姿导演.md`
+8. `references/场景名词池.md`
+9. `references/场景灯光POV池.md`
+10. `references/场景抽样机制.md` — large batches and all "truly random" requests
 
-内部身份优先级：Identity fidelity > face visibility > pose > lighting > cinematic styling。
+For batches of 10 or more, also use `scripts/select_batch.py` after building a candidate-plan JSON file. The script selects the final plans and reports semantic diversity; it does not write the final director-card prose.
 
-首次换场景或用户反馈“人物不像 / 脸偏了 / 换人了”时，自动进入身份保护模式：优先正面至轻微3/4；通常先控制脸部水平转角约0–15°；双眼、鼻口和下颌主要结构清楚可见；减少大侧脸、严重遮挡、极端俯仰、脸部死黑、强逆光和严重运动模糊。全身或远景仍要求脸部有足够像素且清晰可辨。身份稳定后，用户需要时再逐步增加转角。
+Load the following only when the selected mode needs them:
 
-下巴保护：参考人物若为短、小、柔和、圆钝下巴，则保持原始下半脸宽度与下颌收束；不得自动拉长、缩窄、削尖或变成V形下巴。真实视角透视可以改变可见关系，但不得重新设计骨骼比例。
+- COS: `references/cos角色池.md`
+- Candid mode: `references/同行者纪实抓拍.md`
+- Profession or uniform POV: `references/职业制服POV批产.md`
+- Preset packs: `references/主题包.md`
 
-无参考图时才读取 `references/人物层.md`。
+## Interpret the request
 
-## Multi-View Face Lock｜多角度身份卡
-当用户上传一张由同一人物多个角度组成的身份参考表（例如标记为 `L30 | L20 | L10 | 0° | R10 | R20 | R30`）时，将整张图片识别为一个 `MULTI-VIEW IDENTITY SHEET`，而不是多个不同人物。
+- Default to one group if the user does not specify a count.
+- Respect explicit constraints first: count, aspect ratio, style, outfit, scene, direct gaze, exposure level, realism, and platform-specific phrasing.
+- If reference images are unavailable in the current turn, still write the identity-lock clause so the prompt can be paired with them later; do not invent facial traits.
+- Do not sample, infer, or output a facial-expression field. Never create a standalone `表情` heading. If the user explicitly supplies a facial state, preserve only that requested wording as a brief clause inside `场景与动作`; otherwise omit facial-expression language entirely.
+- Do not ask follow-up questions when a coherent random card can be generated safely.
+- Apply later user rules over older rules. Current hard exclusions: all leather garments, dark green, caramel, and the removed silver reflective bodysuit.
+- Draw clothing colors from the complete palette in `references/变量池-服装场景.md`: rainbow pastels, vivid colors, wine red and other clean deep tones, black, white, pure gray, metallics, and color contrasts. Do not treat light-colored tops as a default constraint.
+- For this user's portrait batches, sexify ordinary garments as well as special fashion pieces. Do not output an unchanged conservative shirt, sweater, hoodie, suit, sports uniform, historical outfit, or homewear set. Give each outfit one dominant skin-revealing structure plus one secondary structure, chosen from an open neckline, relaxed/off-shoulder line, open back, side-waist cutout, cropped waist, low-rise bottom, or short-skirt/shorts proportion. Keep the result wearable and fashion-led.
+- If the user reports the generated bust looks too small, explicitly anchor the adult figure to the reference proportions and visually natural E–F fullness; use correctly fitted seams and drape to preserve its volume. Do not exaggerate anatomy or turn the shot into a chest close-up.
+- The user's preferred candid camera language is an ordinary companion or event photographer capturing a natural moment. In generated cards and their negative prompts, omit expressions including “偷拍”“偷摄”“监视”“窥视”; use “同行者随手拍”“自然抓拍”“刚抬起手机记录的一帧” and a plausible camera position instead.
 
-### 身份卡角色
-- `0°` = PRIMARY IDENTITY MASTER：唯一最高优先级身份来源，负责决定“这个人是谁”。
-- `L10/L20/L30/R10/R20/R30` = SECONDARY VIEW GEOMETRY REFERENCES：只负责该人物在对应观察角度下的真实面部几何与透视变化。
-- 禁止平均融合全部角度；禁止把各格理解成不同人物；禁止由侧角度反向重新设计0°正脸。
+## Randomization algorithm
 
-### 方向定义
-L/R 优先按身份卡本身的标签解释，不根据人物解剖左右自行反转。若用户另有明确的画面坐标定义，以用户定义为最高优先级。生成前确认目标方向与身份卡标签一致，避免 L/R 方向翻转。
+For each card, independently sample:
 
-### 自动选角
-生成写真时始终保留 `0°` 作为 Primary Identity Master，并根据最终脸部水平朝向，仅选择最近的1–2个同方向视角作为 Secondary Geometry References：
-- 约 L5 → 0° + L10
-- 约 L15 → 0° + L10 + L20
-- 约 L25 → 0° + L20 + L30
-- 约 R5 → 0° + R10
-- 约 R15 → 0° + R10 + R20
-- 约 R25 → 0° + R20 + R30
-- 接近正面 → 主要依据0°
-不要为了“参考更多”而同时平均调用全部7个角度。
+`director route × scene domain × spatial archetype × specific location × outfit family × top silhouette × bottom/one-piece silhouette × dominant material × activity × hosiery eligibility × optional leg styling × required artistic finish × lighting × color × camera angle × framing × image quality`
 
-目标角度落在两张参考之间时，允许在相邻视角之间做自然几何插值，但身份仍由0°决定。目标超出身份卡覆盖范围时，优先保持身份而不是强行满足精确角度；必要时主动减小转角。
+For random batches, actually draw choices using an available random-number generator (for example Python `secrets.SystemRandom`), following `references/场景抽样机制.md`. Do not cycle through a memorized sequence, take one venue from every category in order, or select only familiar example locations. Draw the scene domain, then the spatial archetype, then the specific venue so long lists of modern streets and travel landmarks cannot drown out unusual settings. Draw outfit family, top silhouette, bottom or one-piece silhouette, and dominant material separately before styling them as a coherent set. Follow the aspect-ratio weights in `references/变量池-摄影语言.md`, unless the user specifies a ratio. When the recent batch is visible, exclude its repeated spatial structures, specific venues, venue–activity patterns, and outfit silhouettes before sampling. If prior output is unavailable, say nothing about historical exclusions and only deduplicate what is visible.
 
-### 全身与远景保护
-多角度身份卡用于全身、回眸、街拍或远景时，仍执行 Strong Identity Lock。脸部在最终画面中过小时，优先通过合理拍摄距离、构图或清晰度保留可识别面部信息，不因为远景而生成泛化的“相似脸”。若角度、回眸动作与身份发生冲突，优先降低转角或简化动作。
+### Start-from-zero batch procedure
 
-### Multi-View Prompt 前缀
-检测到多角度身份卡时，在最终完整 Prompt 前部明确写出：这是同一个成年人物的 Multi-View Identity Sheet；0°为 Primary Identity Master；其余角度仅为 Secondary View Geometry References；禁止平均融合、换人或重新设计脸。无需让用户每次重复说明。
+When the user says “从 0 开始”“重新抽”“完整随机” or reports that a new batch is only a rewrite of the previous one, do not edit, reorder, recolor, or paraphrase old cards. Build a new pool of compact candidate plans before writing any prose:
 
-## 参考图职责
-多张参考图先区分人物身份、服装、姿势、构图、光线、环境、风格。用户指定某图只参考衣服、姿势或场景时，不把该图当人物身份来源。若一张图本身是 Multi-View Identity Sheet，则按上述 Multi-View Face Lock 规则解析。
+1. Create at least `max(4 × requested_count, requested_count + 60)` candidates from the reference pools. Each candidate is only a structured combination, not a finished card.
+2. Store the fields required by `scripts/select_batch.py`: `scene_domain`, `spatial_archetype`, `venue`, `facility`, `activity`, `pose_family`, `outfit_family`, `top_silhouette`, `bottom_silhouette`, `material`, and `artistic_finish`. Add any optional fields needed for later prose.
+3. Do not create candidates by taking a completed card and swapping its city, color, hosiery, prop, or light. Independently draw the scene tuple, activity tuple, outfit tuple, artistic finish, and camera tuple.
+4. Run `python3 scripts/select_batch.py --input <candidate.json> --output <selected.json> --count <N>`. Use `--seed` only when the user asks for a reproducible draw.
+5. Write cards only from `selected.json`. Treat its `direct_gaze`, `companion_camera`, `cos_mode`, and `aspect_ratio` fields as binding unless they conflict with an explicit user instruction.
+6. Read the emitted `audit`. If unique venues or outfit fingerprints are below the requested count, if adjacent fingerprint distance is below four, or if the pose/domain coverage is poor for a general random batch, expand the candidate pool and rerun instead of repairing cards by paraphrase.
 
-## 故事与美姿
-优先正在发生的瞬间，一张图一个主要动作。未指定姿势或要求自然抓拍时读取 `references/人物美姿导演.md`；多组随机动作或动作去重时再读取 `references/美姿变量池.md`。身份保护模式生效时，美姿不得强迫人物做会严重遮脸、大幅回头或导致身份漂移的动作。
+For fewer than 10 cards, the script is optional, but the same semantic fingerprint and compatibility rules still apply. Mandatory identity, body, skin, and negative-prompt text is expected to repeat and must be excluded from similarity judgments.
 
-## 镜头
-24–28mm 用于环境广角；35mm 用于生活纪实；50mm 用于自然中近景；85–135mm 用于人物突出与空间压缩；更长焦用于远距离观察。机位、距离与焦段保持一致。前景遮挡不得覆盖关键面部区域。
+Then run a compatibility pass:
 
-## 光线与成像
-光线按来源、方向、落点、结果组织，一张图只保留一个主光逻辑。每张图只选择一个主成像系统。需要详细成像规则时读取 `references/成像机制原则.md`。低调或电影光仍需保留足够面部信息，不为了氛围让脸部关键结构进入死黑。
+1. Keep identity, anatomy, wardrobe construction, action, and environment physically coherent.
+2. Sample scene and outfit independently. Do not require period, occupation, color, or social-setting agreement. Preserve intentional contrast instead of normalizing a surprising but viable pairing into a conventional one.
+3. Convert duplicate action aliases to one semantic action before sampling so repeated wording does not overweight it. Use `references/人物美姿导演.md` for the body movement and `references/场景名词池.md` sections 44–45 for its practical purpose; combine them into one believable ongoing event.
+4. Remove duplicate venue–activity pairs and near-identical visual events within a batch. Treat renamed corridors, window seats, counters, platforms, and landmark-front poses as repetitions when their spatial archetype, facility, and action remain the same. Apply the rolling cooldown in `references/场景抽样机制.md` rather than following a fixed alternation.
+5. In a large batch, have about 60% of the subjects look directly into the lens, often while their hands continue a meaningful task or in the half-second after responding to the photographer. Direct gaze does not require a stationary, front-facing pose. In the remainder, keep the face visible while attention stays on the task or the surroundings. Do not create separate `视线` or `表情` headings; write gaze, head direction, reactions to the photographer, and event context only inside `场景与动作`. Do not invent facial-muscle, eyebrow, eye, or mouth-expression descriptions.
+6. Trigger the companion-camera mode in `references/同行者纪实抓拍.md` independently with probability 1/5; its output vocabulary restriction applies to every card, including negative prompts. Softly blurred flowers, leaves, grasses, or other small plants may sit between the camera and the subject when they stay near the frame edges and do not cover the face, torso outline, or main action. A curtain may cross the foreground or part of the figure only when it is thin, translucent, and visibly transmits the person's facial features and body outline. Exclude opaque foreground objects, dense foliage, dirty glass, passing people, and any obstruction that hides the subject.
+7. Independently draw outfit silhouettes from the `COS角色服装剪裁池` in `references/变量池-服装场景.md`, including ordinary locations. Trigger complete COS mode separately with probability 1/10 when the selected scene is outside a comic/anime convention. If the scene is 漫展 or 同人展, trigger COS unconditionally, choose one character from `references/cos角色池.md`, and make costume, hairstyle, and props recognizable while preserving the reference face. When combined with the companion-camera mode, use a plausible convention or backstage moment.
+8. For 16:9, use a close portrait no wider than seven-tenths body; never use a full-body or large-environment composition.
+   For every aspect ratio, reject extreme long shots, distant environmental portraits, tiny landmark poses, and any composition in which the face becomes too small to preserve identity. A full-body subject must occupy about 75–88% of image height; a seven-tenths, knee-up, or half-body subject must remain visually dominant and normally occupy about 70–90% of image height. Keep the face large enough for the reference identity, facial proportions, skin texture, and identifying mole to remain clearly readable. If a landmark or large fantasy environment conflicts with face scale, crop or compress the environment instead of moving the subject farther away.
+9. Draw scene and outfit separately; keep their viable contrast. Do not force fixed match/contrast quotas that make successive batches predictable.
+10. For travel and everyday scenes, draw a meaningful activity from `references/场景名词池.md` sections 44–46, pair it with one place-specific object, and catch a moment mid-action. Vary boating, picnicking, running, cycling, safely stopping an electric scooter, making art, dancing, cooking, and using mirrors; avoid repeated stationary landmark poses. Let a glance meet the lens without interrupting the action when the sampled gaze is direct. Choose practical shoes and gear when an activity demands them.
+11. Finish and approve the clothing silhouette before drawing leg styling. First reject an unchanged midi skirt, ordinary long skirt, wide-leg trousers, loose full-length trousers, or other conservative lower-body silhouette; resample it or convert it into a mini, fitted shorts, a genuinely high-slit fitted long skirt, fitted ripped denim, or another fashion-led silhouette. Then determine hosiery eligibility from outfit, activity, weather, framing and footwear. Use the three-way leg-styling distribution and compatibility matrix in `references/变量池-服装场景.md`; hosiery is optional, never a repair for an unattractive outfit. Draw the hosiery family first and its compatible color second. Gray-purple or lavender hosiery is a low-frequency accent, not a neutral fallback. Do not make hosiery a body-part close-up. Garment shapes and color samples are independent: the loose draped deep-V chiffon top retains its cut and fabric description while its color varies freely.
+12. Draw exactly one named artistic finish from `references/变量池-摄影语言.md` for every card. Never omit this step. Make the finish visibly legible in the final image through a physically plausible light, shadow, reflection, projection, window, plant shadow, water reflection, translucent curtain, shallow-depth plant foreground, or localized motion mechanism. Keep the real person's face and figure clearly visible; shadows, paintings, and reflections may echo or visually interact with her but may not become extra physical people. Companion-camera mode may also use `花影朦胧` or `隔帘见人` when blurred plants remain light and peripheral or the curtain is translucent enough to preserve facial features and body contours. Never place opaque fabric, dense foliage, or a large foreground object over the face, torso, or main action.
+13. Build the top and bottom as one coordinated outfit rather than two independent random nouns. Run the silhouette-and-material audit, sensuality gate, hosiery audit and outfit fingerprint cooldown in `references/变量池-服装场景.md`: one visual focal point, compatible waist heights, balanced fabric weight, controlled transparency, and no competing all-over lace, metallic shine, print, and chains. Require one dominant skin-revealing structure plus one secondary structure before allowing hosiery to be added. A color, print, hosiery, shoe, or accessory change does not make a repeated silhouette new.
+14. Before prose writing, store one internal fingerprint per card: `scene domain｜spatial archetype｜venue/facility｜activity｜outfit family｜top silhouette｜bottom/one-piece silhouette｜dominant material｜artistic finish`. Reject a candidate that is too close to another card in the current batch or the recent visible batch. Adjacent cards must differ in at least four fingerprint fields. If compatibility fails, resample only the conflicting field; never normalize the candidate into the same familiar corridor, short top, mini skirt, or static landmark pose used nearby.
 
-## 冲突检查
-生成前检查人物身份、Multi-View目标方向与选角、脸部可见性、下巴与下半脸、姿势可实现性、焦段与机位、主光、成像系统、服装天气动作和构图。冲突时保留用户明确条件与 Strong Identity Lock。若精确角度与身份冲突：身份 > 角度；允许减少转角，不允许换脸。
+For long batches, sample the scene plan with a real random generator and treat compatibility and exact-duplicate rejection as constraints. Do not claim mathematically uniform complete prompts: the final wording still needs creative writing and physical plausibility.
 
-## 本地 references 按需加载
-默认不要一次读取全部文件：
-- 人物文字锚点 → `references/人物层.md`
-- 自然姿态 → `references/人物美姿导演.md`
-- 多组随机美姿 → `references/美姿变量池.md`
-- 随机服装或场景 → `references/变量池-服装场景.md`
-- 发型、神态、状态 → `references/变量池-形象神态.md`
-- 镜头与构图 → `references/变量池-摄影语言.md`
-- 随机摄影企划 → `references/变量池-导演路线.md`
-- 成像系统与光线一致性 → `references/成像机制原则.md`
-- 用户明确要求模拟远距离抓拍感 → `references/偷拍感模式.md`
+## Default to the detailed ten-block director-card format
 
-所有路径都从 `随机写真融合版-V2/references/` 读取。某文件读取失败时明确报告具体文件，不回退到 V1，也不假装已经读取。
+The user's current preference is the long, rich, self-contained ten-block card below, even for large random batches. Give each card its own full identity lock and negative prompt so it can be copied alone. Do not add an expression block. In `场景与动作`, describe the ongoing activity, body movement, head direction, and gaze without inventing facial affect; in `摄影质感` and `光线与色彩`, describe the chosen artistic finish and how its real light or optics work. Keep the subject visually dominant and the referenced face large enough for identity details to remain readable. Use compact records only if the user explicitly requests a short list, overview, table, or simple description.
 
-## 随机导演
-先选一个摄影企划，再让服装、场景、动作、焦段、光线和成像系统服从同一企划，不把随机词全部堆在一起。检测到 Multi-View Identity Sheet 时，先完成身份选角，再进行随机导演。
+## Compact format when explicitly requested
 
-## 批量差异
-多组生成时，场景、故事瞬间或美姿、焦段或机位、主成像系统中至少三项明显变化；人物身份和用户锁定条件保持不变。每组根据实际脸部方向独立选择对应的 Multi-View 辅助角度，不沿用上一组错误方向。
+When the user explicitly asks for a compact version, keep the scene-specific activity, clothing and color, optional hosiery, hair style and color, shoes and whether they enter the frame, aspect ratio/framing/camera angle, and main light plus capture quality. Use this order:
 
-## 输出
-默认每组输出简短要素卡、中文完整 Prompt、英文完整 Prompt 和精准负面约束。用户说只给提示词时省略解释。人物参考图任务的身份一致性要求放在 Prompt 前部。检测到 Multi-View Identity Sheet 时，Prompt 前部必须包含压缩后的 Multi-View Face Lock 规则，并说明本组实际采用的目标方向及辅助视角。
+`编号｜固定人物前缀｜场景＋正在发生的事｜服饰＋配色＋适配的丝袜（可选）｜发型＋发色｜鞋履／是否入镜｜画幅＋景别＋机位｜主光＋命名的艺术成片效果＋画质氛围`
 
-参考人物任务的精准负面约束优先包含：identity drift, different person, face redesign, face-shape change, feature-proportion change, over-maturing, influencer/template face, pointed or elongated chin, excessive jaw taper, plastic skin, over-smoothing。仅输出与当前任务相关的负面约束，不机械堆词。
+Use the exact short identity prefix in `references/人物层.md` inside every compact record. Do not leave the prefix only above the batch, use `同上`, or require the user to assemble two text pieces. For a planning overview a table is acceptable; when the user asks to copy prompts, output numbered standalone paragraphs or individual code blocks, each containing the full prefix followed by its own scene, activity, outfit, hair, shoes, framing, and light. Preserve the reference proportions with plausible fitted fabric and neckline construction. Name a single recognizable place and a natural activity. Avoid boilerplate negative prompts in compact mode. Do not invent permanent facial traits.
 
-## 加载纪律
-少重复、按需读取。简单任务不套大流程；检查通过后停止额外加载。用户已经锁定的条件不再随机覆盖。
+For visible footwear, replace ordinary short boots with slender high heels in a color that fits the outfit. Reserve black sporty ankle boots only for a capable military or police look. Other functional shoes, such as court sneakers for active sport and flat sandals for a beach walk, may remain when they are part of the concept. If footwear is cropped out, write `不入镜` rather than naming a shoe that cannot be seen. Place a high-heel look on stable ground or an indoor walkway when the broader location includes snow, rocks, or a sports court.
+
+## Detailed ten-block format
+
+Use these headings in order:
+
+1. `开头` — aspect ratio + director-route style + scene + framing
+2. `人物身份锁定` — long identity lock + refined but natural features + real skin texture + clear face
+3. `身材与比例` — 23-year-old adult woman + 170 cm + visually E–F cup + slender waist + defined collarbone + long legs
+4. `发型`
+5. `妆容`
+6. `服装` — high-fashion coordinated look + clearly constructed coverage + smooth shoulder/neck/collarbone lines + clear waistline
+7. `场景与动作` — specific place + pure action + body/head direction + gaze + unforced moment
+8. `光线与色彩`
+9. `摄影质感` — capture quality + lens + camera angle + explicit subject occupancy + the required named artistic finish with a clearly legible face + refined editorial atmosphere without commercial studio polish
+10. `负面提示词`
+
+Do not add a standalone gaze section. Avoid blunt phrases such as “露出……” when describing styling; express visible skin through design language such as “肩颈与锁骨线条清晰”“腰侧线条清晰”“背部线条完整”“腿部比例得到延展”. Do not append stock disclaimers like “完整穿着、不暴露内衣、不走光” unless the user explicitly asks for them; enforce those constraints silently through garment construction and the negative prompt.
+
+Never output a `表情` block and never replace it with an unlabeled expression sentence. Keep direct gaze, looking away, turning the head, and reactions to the photographer inside `场景与动作` because they are action and direction, not an expression category.
+
+## Quality bar
+
+- Keep one clear event, one readable action beat, and one primary interaction object.
+- Describe a plausible main light and restrained secondary reflections.
+- Prefer real skin, fabric folds, loose hairs, natural weight, localized motion blur, and capture-medium artifacts over polished AI beauty language.
+- Keep face visibility and face scale high. Exclude closed eyes, squinting, face-covering, downward poses that hide facial features, extreme long shots, tiny people, and excessive empty environment.
+- Never imply nudity, transparent exposure of intimate anatomy, wardrobe malfunction, fetish framing, or a minor. Keep sensuality fashion-led and non-explicit.
+- Write each card as a directly usable prompt, not as notes about the randomization process.
+
+## Detailed batch output
+
+When producing detailed cards, number them and give each a short route title. Keep every card self-contained, including the identity lock and negative prompt. Do not replace repeated mandatory identity details with “同上”.
