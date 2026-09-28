@@ -130,3 +130,17 @@ Never output a `表情` block and never replace it with an unlabeled expression 
 ## Detailed batch output
 
 When producing detailed cards, number them and give each a short route title. Keep every card self-contained, including the identity lock and negative prompt. Do not replace repeated mandatory identity details with “同上”.
+
+
+## 2026-09-29 high-priority overrides
+
+These rules override older examples in every reference file:
+
+- Do not use asymmetric one-shoulder, diagonal-shoulder, one-sleeve, or single exposed-shoulder silhouettes. Replace them with symmetric spaghetti straps, halter straps, strapless tube/bandeau structures, symmetric low necklines, or other balanced two-shoulder constructions.
+- In general random batches, use only portrait or square aspect ratios: `9:16`, `4:5`, `3:4`, or occasional `1:1`. Do not draw `3:2` or `16:9` unless the user explicitly requests a horizontal image. Default strongly toward 9:16.
+- Reduce side-profile look-back poses. For a 100-card general batch, keep side-turn/look-back at no more than 5–10 cards and never place them consecutively. Prefer front-facing, slight three-quarter front, seated front, mid-action front, walking toward camera, crouching, leaning, and task-focused poses.
+- Keep the overall wardrobe sensual and skin-revealing through fashion structure. Prefer symmetric spaghetti-strap, halter, strapless, low-neck, open-back, cropped-waist, side-waist cutout, mini-skirt, fitted-short, or high-slit constructions. Do not use hosiery or heels to rescue a conservative silhouette.
+- Long denim trousers are a rare accent, not a default. In a 100-card batch, allow at most 1 long-denim-trouser card and at most 2 full-length-trouser cards of any kind. Prefer denim hot pants, ultra-short denim shorts, ripped denim shorts, denim mini skirts, or side-tie denim mini skirts instead.
+- Hosiery must always name its structural length/form, not just color. Valid examples include `黑色薄透连裤袜`, `白色短筒丝袜`, `浅粉中筒丝袜`, `奶白及膝长筒袜`, `黑色过膝长筒袜`, `大腿长筒袜`, and `后缝吊带长筒袜`. Reject vague labels such as `黑丝`, `白丝`, `粉丝`, `黑色丝袜`, or `白色丝袜` when no structural form is stated.
+- For the current optical-finish preference, strongly diversify physically plausible soft-obscuration and projection mechanisms: misted or frosted projection, blurred human shadow in the background, flower-shadow haze, candle-shadow layering, glass-sphere refraction, water-glass refraction, translucent-curtain diffusion, prism splitting, rain-on-glass double image, mirror edge echo, leaf-shadow diffusion, and localized moving light. Do not repeat the same finish wording across nearby cards.
+- The optical effect may soften the scene, foreground, reflection, or projected shadow, but the real subject's face must remain readable and identity-stable. A background human-shaped projection is a light/shadow image, not a second physical person.
