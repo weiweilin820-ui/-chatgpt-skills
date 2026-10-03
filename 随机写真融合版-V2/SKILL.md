@@ -18,9 +18,10 @@ Read these files before composing any card:
 5. `references/变量池-导演路线.md`
 6. `references/成像机制原则.md`
 7. `references/人物美姿导演.md`
-8. `references/场景名词池.md`
-9. `references/场景灯光POV池.md`
-10. `references/场景抽样机制.md` — large batches and all "truly random" requests
+8. `references/情绪表达.md`
+9. `references/场景名词池.md`
+10. `references/场景灯光POV池.md`
+11. `references/场景抽样机制.md` — large batches and all "truly random" requests
 
 For batches of 10 or more, also use `scripts/select_batch.py` after building a candidate-plan JSON file. The script selects the final plans and reports semantic diversity; it does not write the final director-card prose.
 
@@ -36,7 +37,7 @@ Load the following only when the selected mode needs them:
 - Default to one group if the user does not specify a count.
 - Respect explicit constraints first: count, aspect ratio, style, outfit, scene, direct gaze, exposure level, realism, and platform-specific phrasing.
 - If reference images are unavailable in the current turn, still write the identity-lock clause so the prompt can be paired with them later; do not invent facial traits.
-- Do not sample, infer, or output a facial-expression field. Never create a standalone `表情` heading. If the user explicitly supplies a facial state, preserve only that requested wording as a brief clause inside `场景与动作`; otherwise omit facial-expression language entirely.
+- Never create a standalone `表情` heading. Treat emotion as an independent creative variable governed by `references/情绪表达.md`. Write only a concise emotion state inside `场景与动作` (for example 开心、惊喜、憔悴、难过、惊慌、困惑、无奈); do not micro-direct facial muscles such as mouth corners, teeth, eyebrow height, eye opening, cheek lift, or exact lip shape. If the user explicitly supplies an emotion, preserve that emotion rather than replacing it with a different one.
 - Do not ask follow-up questions when a coherent random card can be generated safely.
 - Apply later user rules over older rules. Current hard exclusions: all leather garments, dark green, caramel, and the removed silver reflective bodysuit.
 - Draw clothing colors from the complete palette in `references/变量池-服装场景.md`: rainbow pastels, vivid colors, wine red and other clean deep tones, black, white, pure gray, metallics, and color contrasts. Do not treat light-colored tops as a default constraint.
@@ -48,7 +49,7 @@ Load the following only when the selected mode needs them:
 
 For each card, independently sample:
 
-`director route × scene domain × spatial archetype × specific location × outfit family × top silhouette × bottom/one-piece silhouette × dominant material × activity × hosiery eligibility × optional leg styling × required artistic finish × lighting × color × camera angle × framing × image quality`
+`director route × scene domain × spatial archetype × specific location × outfit family × top silhouette × bottom/one-piece silhouette × dominant material × activity × pose family × emotion state × hosiery eligibility × optional leg styling × required artistic finish × lighting × color × camera angle × framing × image quality`
 
 For random batches, actually draw choices using an available random-number generator (for example Python `secrets.SystemRandom`), following `references/场景抽样机制.md`. Do not cycle through a memorized sequence, take one venue from every category in order, or select only familiar example locations. Draw the scene domain, then the spatial archetype, then the specific venue so long lists of modern streets and travel landmarks cannot drown out unusual settings. Draw outfit family, top silhouette, bottom or one-piece silhouette, and dominant material separately before styling them as a coherent set. Follow the aspect-ratio weights in `references/变量池-摄影语言.md`, unless the user specifies a ratio. When the recent batch is visible, exclude its repeated spatial structures, specific venues, venue–activity patterns, and outfit silhouettes before sampling. If prior output is unavailable, say nothing about historical exclusions and only deduplicate what is visible.
 
@@ -71,7 +72,7 @@ Then run a compatibility pass:
 2. Sample scene and outfit independently. Do not require period, occupation, color, or social-setting agreement. Preserve intentional contrast instead of normalizing a surprising but viable pairing into a conventional one.
 3. Convert duplicate action aliases to one semantic action before sampling so repeated wording does not overweight it. Use `references/人物美姿导演.md` for the body movement and `references/场景名词池.md` sections 44–45 for its practical purpose; combine them into one believable ongoing event.
 4. Remove duplicate venue–activity pairs and near-identical visual events within a batch. Treat renamed corridors, window seats, counters, platforms, and landmark-front poses as repetitions when their spatial archetype, facility, and action remain the same. Apply the rolling cooldown in `references/场景抽样机制.md` rather than following a fixed alternation.
-5. In a large batch, have about 60% of the subjects look directly into the lens, often while their hands continue a meaningful task or in the half-second after responding to the photographer. Direct gaze does not require a stationary, front-facing pose. In the remainder, keep the face visible while attention stays on the task or the surroundings. Do not create separate `视线` or `表情` headings; write gaze, head direction, reactions to the photographer, and event context only inside `场景与动作`. Do not invent facial-muscle, eyebrow, eye, or mouth-expression descriptions.
+5. In a large batch, have about 60% of the subjects look directly into the lens, often while their hands continue a meaningful task or in the half-second after responding to the photographer. Direct gaze does not require a stationary, front-facing pose. In the remainder, keep the face visible while attention stays on the task or the surroundings. Independently sample one emotion state from `references/情绪表达.md`, repair it for scene compatibility, and place it as a short clause inside `场景与动作`. Do not create separate `视线` or `表情` headings. Write gaze, head direction, pose/action, event context, and the concise emotion only inside `场景与动作`; never spell out facial-muscle mechanics such as how far the mouth opens, how many teeth show, eyebrow height, eye width, cheek lift, or lip shape.
 6. Trigger the companion-camera mode in `references/同行者纪实抓拍.md` independently with probability 1/5; its output vocabulary restriction applies to every card, including negative prompts. Softly blurred flowers, leaves, grasses, or other small plants may sit between the camera and the subject when they stay near the frame edges and do not cover the face, torso outline, or main action. A curtain may cross the foreground or part of the figure only when it is thin, translucent, and visibly transmits the person's facial features and body outline. Exclude opaque foreground objects, dense foliage, dirty glass, passing people, and any obstruction that hides the subject.
 7. Independently draw outfit silhouettes from the `COS角色服装剪裁池` in `references/变量池-服装场景.md`, including ordinary locations. Trigger complete COS mode separately with probability 1/10 when the selected scene is outside a comic/anime convention. If the scene is 漫展 or 同人展, trigger COS unconditionally, choose one character from `references/cos角色池.md`, and make costume, hairstyle, and props recognizable while preserving the reference face. When combined with the companion-camera mode, use a plausible convention or backstage moment.
 8. For 16:9, use a close portrait no wider than seven-tenths body; never use a full-body or large-environment composition.
@@ -87,7 +88,7 @@ For long batches, sample the scene plan with a real random generator and treat c
 
 ## Default to the detailed ten-block director-card format
 
-The user's current preference is the long, rich, self-contained ten-block card below, even for large random batches. Give each card its own full identity lock and negative prompt so it can be copied alone. Do not add an expression block. In `场景与动作`, describe the ongoing activity, body movement, head direction, and gaze without inventing facial affect; in `摄影质感` and `光线与色彩`, describe the chosen artistic finish and how its real light or optics work. Keep the subject visually dominant and the referenced face large enough for identity details to remain readable. Use compact records only if the user explicitly requests a short list, overview, table, or simple description.
+The user's current preference is the long, rich, self-contained ten-block card below, even for large random batches. Give each card its own full identity lock and negative prompt so it can be copied alone. Do not add an expression block. In `场景与动作`, describe the ongoing activity, body movement, pose, head direction, gaze, and one concise emotion state. Describe the emotion semantically (such as 开心、悲伤、憔悴、难过、惊慌、好奇、无奈), not through facial-muscle instructions. In `摄影质感` and `光线与色彩`, describe the chosen artistic finish and how its real light or optics work. Keep the subject visually dominant and the referenced face large enough for identity details to remain readable. Use compact records only if the user explicitly requests a short list, overview, table, or simple description.
 
 ## Compact format when explicitly requested
 
@@ -109,14 +110,14 @@ Use these headings in order:
 4. `发型`
 5. `妆容`
 6. `服装` — high-fashion coordinated look + clearly constructed coverage + smooth shoulder/neck/collarbone lines + clear waistline
-7. `场景与动作` — specific place + pure action + body/head direction + gaze + unforced moment
+7. `场景与动作` — specific place + pure action + body pose/head direction + gaze + concise emotion state + unforced moment
 8. `光线与色彩`
 9. `摄影质感` — capture quality + lens + camera angle + explicit subject occupancy + the required named artistic finish with a clearly legible face + refined editorial atmosphere without commercial studio polish
 10. `负面提示词`
 
 Do not add a standalone gaze section. Avoid blunt phrases such as “露出……” when describing styling; express visible skin through design language such as “肩颈与锁骨线条清晰”“腰侧线条清晰”“背部线条完整”“腿部比例得到延展”. Do not append stock disclaimers like “完整穿着、不暴露内衣、不走光” unless the user explicitly asks for them; enforce those constraints silently through garment construction and the negative prompt.
 
-Never output a `表情` block and never replace it with an unlabeled expression sentence. Keep direct gaze, looking away, turning the head, and reactions to the photographer inside `场景与动作` because they are action and direction, not an expression category.
+Never output a standalone `表情` block. Keep direct gaze, looking away, turning the head, reactions to the photographer, and the sampled emotion inside `场景与动作`. Emotion wording must stay short and semantic; do not translate it into detailed mouth, teeth, eyebrow, eye, cheek, or lip instructions.
 
 ## Quality bar
 
