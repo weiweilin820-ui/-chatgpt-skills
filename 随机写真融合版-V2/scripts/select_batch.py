@@ -62,7 +62,8 @@ EMOTIONS = (
 )
 
 FORBIDDEN_SHOULDER_TERMS = ("单肩", "斜肩", "不对称肩", "单侧肩", "一字斜肩")
-HOSIERY_FORM_TERMS = ("短筒", "中筒", "及膝", "过膝", "大腿", "吊带", "连裤袜", "裤袜")
+HOSIERY_FORM_TERMS = ("中筒", "及膝", "过膝", "大腿", "吊带", "连裤袜", "裤袜")
+SHORT_HOSIERY_TERMS = ("短袜", "短筒", "船袜", "踝袜", "ankle sock", "ankle socks", "no-show sock", "no-show socks")
 LONG_DENIM_TERMS = ("牛仔长裤", "丹宁长裤", "微喇牛仔", "直筒牛仔长裤", "破洞牛仔长裤")
 LONG_TROUSER_TERMS = ("长裤", "微喇裤", "直筒裤", "机能长裤", "西装长裤", "牛仔长裤", "丹宁长裤")
 
@@ -110,6 +111,11 @@ def is_long_denim(candidate: dict[str, Any]) -> bool:
 def is_long_trouser(candidate: dict[str, Any]) -> bool:
     text = clean(candidate.get("bottom_silhouette", ""))
     return any(term in text for term in LONG_TROUSER_TERMS)
+
+
+def has_short_hosiery(candidate: dict[str, Any]) -> bool:
+    hosiery = clean(candidate.get("hosiery", "")).lower()
+    return any(term.lower() in hosiery for term in SHORT_HOSIERY_TERMS)
 
 
 def ambiguous_hosiery(candidate: dict[str, Any]) -> bool:
@@ -186,6 +192,8 @@ def select(candidates: list[dict[str, Any]], count: int, rng: random.Random) -> 
                 continue
             if ambiguous_hosiery(item):
                 continue
+            if has_short_hosiery(item):
+                continue
             if is_long_denim(item) and long_denim_count >= max(1, round(count / 100)):
                 continue
             if is_long_trouser(item) and long_trouser_count >= max(1, round(count * 0.02)):
@@ -255,6 +263,7 @@ def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
         "minimum_adjacent_fingerprint_distance": min(distances) if distances else None,
         "forbidden_shoulder_structures": sum(has_forbidden_shoulder(item) for item in selected),
         "ambiguous_hosiery_forms": sum(ambiguous_hosiery(item) for item in selected),
+        "short_hosiery": sum(has_short_hosiery(item) for item in selected),
         "long_denim": sum(is_long_denim(item) for item in selected),
         "all_long_trousers": sum(is_long_trouser(item) for item in selected),
     }
