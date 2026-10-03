@@ -54,6 +54,13 @@ OUTFIT_FIELDS = (
 RATIOS = ("9:16", "4:5", "3:4", "1:1")
 RATIO_WEIGHTS = (74.0, 15.0, 8.0, 3.0)
 
+EMOTIONS = (
+    "开心", "愉悦", "惊喜", "期待", "好奇", "俏皮", "得意", "害羞", "放松", "温柔", "释然",
+    "平静", "专注", "若有所思", "克制", "警觉", "倔强", "冷淡", "怀疑", "困惑", "无奈", "恍惚",
+    "疲惫", "憔悴", "失落", "悲伤", "难过", "委屈", "孤独", "怅然",
+    "担忧", "紧张", "惊慌", "害怕", "震惊", "烦躁", "生气",
+)
+
 FORBIDDEN_SHOULDER_TERMS = ("单肩", "斜肩", "不对称肩", "单侧肩", "一字斜肩")
 HOSIERY_FORM_TERMS = ("短筒", "中筒", "及膝", "过膝", "大腿", "吊带", "连裤袜", "裤袜")
 LONG_DENIM_TERMS = ("牛仔长裤", "丹宁长裤", "微喇牛仔", "直筒牛仔长裤", "破洞牛仔长裤")
@@ -223,6 +230,7 @@ def assign_batch_flags(selected: list[dict[str, Any]], rng: random.Random) -> No
         item["companion_camera"] = rng.random() < 0.20
         item["cos_mode"] = convention or rng.random() < 0.10
         item["aspect_ratio"] = rng.choices(RATIOS, weights=RATIO_WEIGHTS, k=1)[0]
+        item["emotion"] = rng.choice(EMOTIONS)
 
 
 def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
@@ -243,6 +251,7 @@ def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
         "companion_camera": sum(bool(item["companion_camera"]) for item in selected),
         "cos_mode": sum(bool(item["cos_mode"]) for item in selected),
         "aspect_ratios": dict(Counter(item["aspect_ratio"] for item in selected)),
+        "emotions": dict(Counter(item["emotion"] for item in selected)),
         "minimum_adjacent_fingerprint_distance": min(distances) if distances else None,
         "forbidden_shoulder_structures": sum(has_forbidden_shoulder(item) for item in selected),
         "ambiguous_hosiery_forms": sum(ambiguous_hosiery(item) for item in selected),
