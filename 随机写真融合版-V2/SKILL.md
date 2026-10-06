@@ -62,7 +62,7 @@ When the user says “从 0 开始”“重新抽”“完整随机” or report
 2. Store the fields required by `scripts/select_batch.py`: `scene_domain`, `spatial_archetype`, `venue`, `facility`, `activity`, `pose_family`, `outfit_family`, `top_silhouette`, `bottom_silhouette`, `material`, and `artistic_finish`. Add any optional fields needed for later prose.
 3. Do not create candidates by taking a completed card and swapping its city, color, hosiery, prop, or light. Independently draw the scene tuple, activity tuple, outfit tuple, artistic finish, and camera tuple.
 4. Run `python3 scripts/select_batch.py --input <candidate.json> --output <selected.json> --count <N>`. Use `--seed` only when the user asks for a reproducible draw.
-5. Write cards only from `selected.json`. Treat its `direct_gaze`, `companion_camera`, `cos_mode`, and `aspect_ratio` fields as binding unless they conflict with an explicit user instruction.
+5. Write cards only from `selected.json`. Treat its `direct_gaze`, `companion_camera`, `cos_mode`, `aspect_ratio`, and `framing` fields as binding unless they conflict with an explicit user instruction.
 6. Read the emitted `audit`. If unique venues or outfit fingerprints are below the requested count, if adjacent fingerprint distance is below four, or if the pose/domain coverage is poor for a general random batch, expand the candidate pool and rerun instead of repairing cards by paraphrase.
 
 For fewer than 5 cards, the script is optional, but the same semantic fingerprint and compatibility rules still apply. For batches of 5–9 cards, run the same selector/audit so small batches do not collapse into repeated pose-action templates. Mandatory identity, body, skin, and negative-prompt text is expected to repeat and must be excluded from similarity judgments.
