@@ -61,11 +61,21 @@ EMOTIONS = (
     "担忧", "紧张", "惊慌", "害怕", "震惊", "烦躁", "生气",
 )
 
-FORBIDDEN_SHOULDER_TERMS = ("单肩", "斜肩", "不对称肩", "单侧肩", "一字斜肩")
+FORBIDDEN_SHOULDER_TERMS = ("单肩", "斜肩", "不对称肩", "单侧肩", "一字斜肩", "斜领", "单袖", "一边有袖")
 HOSIERY_FORM_TERMS = ("中筒", "及膝", "过膝", "大腿", "吊带", "连裤袜", "裤袜")
 SHORT_HOSIERY_TERMS = ("短袜", "短筒", "船袜", "踝袜", "ankle sock", "ankle socks", "no-show sock", "no-show socks")
 LONG_DENIM_TERMS = ("牛仔长裤", "丹宁长裤", "微喇牛仔", "直筒牛仔长裤", "破洞牛仔长裤")
 LONG_TROUSER_TERMS = ("长裤", "微喇裤", "直筒裤", "机能长裤", "西装长裤", "牛仔长裤", "丹宁长裤")
+
+FORBIDDEN_GARMENT_TERMS = (
+    "皮革", "仿皮", "pu皮", "PU皮", "墨绿色", "墨绿", "深绿色", "深绿",
+    "焦糖色", "焦糖", "银色反光连体衣", "银色反光连体",
+)
+FORBIDDEN_WAIST_CUTOUT_TERMS = (
+    "腰侧小面积镂空", "腰侧镂空", "侧腰镂空", "腹部镂空", "腰部镂空",
+    "腰侧开口", "侧腰开口", "腹部开口", "腰部局部切口", "腰侧裁片", "侧腰裁片",
+)
+
 
 
 def clean(value: Any) -> str:
@@ -101,6 +111,26 @@ def has_forbidden_shoulder(candidate: dict[str, Any]) -> bool:
         for field in ("outfit_family", "top_silhouette", "material")
     )
     return any(term in text for term in FORBIDDEN_SHOULDER_TERMS)
+
+
+def candidate_wardrobe_text(candidate: dict[str, Any]) -> str:
+    return " ".join(
+        clean(candidate.get(field, ""))
+        for field in (
+            "outfit_family", "top_silhouette", "bottom_silhouette", "material",
+            "hosiery", "color", "outfit_notes",
+        )
+    )
+
+
+def has_forbidden_garment(candidate: dict[str, Any]) -> bool:
+    text = candidate_wardrobe_text(candidate)
+    return any(term.lower() in text.lower() for term in FORBIDDEN_GARMENT_TERMS)
+
+
+def has_forbidden_waist_cutout(candidate: dict[str, Any]) -> bool:
+    text = candidate_wardrobe_text(candidate)
+    return any(term in text for term in FORBIDDEN_WAIST_CUTOUT_TERMS)
 
 
 def is_long_denim(candidate: dict[str, Any]) -> bool:
@@ -189,6 +219,10 @@ def select(candidates: list[dict[str, Any]], count: int, rng: random.Random) -> 
             if selected and distance(item, selected[-1]) < 4:
                 continue
             if has_forbidden_shoulder(item):
+                continue
+            if has_forbidden_garment(item):
+                continue
+            if has_forbidden_waist_cutout(item):
                 continue
             if ambiguous_hosiery(item):
                 continue
@@ -320,6 +354,11 @@ def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
         "emotions": dict(Counter(item["emotion"] for item in selected)),
         "minimum_adjacent_fingerprint_distance": min(distances) if distances else None,
         "forbidden_shoulder_structures": sum(has_forbidden_shoulder(item) for item in selected),
+        "forbidden_garments": sum(has_forbidden_garment(item) for item in selected),
+        "forbidden_waist_cutouts": sum(has_forbidden_waist_cutout(item) for item in selected),
+        "outfit_families": dict(Counter(item["outfit_family"] for item in selected)),
+        "top_silhouettes": dict(Counter(item["top_silhouette"] for item in selected)),
+        "bottom_silhouettes": dict(Counter(item["bottom_silhouette"] for item in selected)),
         "ambiguous_hosiery_forms": sum(ambiguous_hosiery(item) for item in selected),
         "short_hosiery": sum(has_short_hosiery(item) for item in selected),
         "long_denim": sum(is_long_denim(item) for item in selected),
