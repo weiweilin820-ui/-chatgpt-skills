@@ -228,10 +228,45 @@ def select(candidates: list[dict[str, Any]], count: int, rng: random.Random) -> 
     return selected
 
 
+def is_static_standing(candidate: dict[str, Any]) -> bool:
+    pose = clean(candidate.get("pose_family", ""))
+    dynamic_tokens = ("行走", "走", "跑", "跳", "转身", "停步", "侧步", "漫步", "动态", "自拍", "镜前")
+    standing_tokens = ("站姿", "站立", "站", "倚靠")
+    return any(token in pose for token in standing_tokens) and not any(token in pose for token in dynamic_tokens)
+
+
+def separated_direct_flags(count: int, rng: random.Random) -> list[bool]:
+    direct_count = round(count * 0.80)
+    false_count = count - direct_count
+    flags = [True] * count
+    if false_count <= 0:
+        return flags
+
+    candidates = list(range(count))
+    rng.shuffle(candidates)
+    chosen: list[int] = []
+    for index in candidates:
+        if all(abs(index - other) > 1 for other in chosen):
+            chosen.append(index)
+            if len(chosen) == false_count:
+                break
+
+    if len(chosen) < false_count:
+        remaining = [index for index in range(count) if index not in chosen]
+        rng.shuffle(remaining)
+        chosen.extend(remaining[: false_count - len(chosen)])
+
+    for index in chosen:
+        flags[index] = False
+    return flags
+
+
 def assign_batch_flags(selected: list[dict[str, Any]], rng: random.Random) -> None:
     count = len(selected)
-    direct = [True] * round(count * 0.60) + [False] * (count - round(count * 0.60))
-    rng.shuffle(direct)
+    direct = separated_direct_flags(count, rng)
+    static_full_body_budget = max(0, int(count * 0.10))
+    static_full_body_used = 0
+
     for index, item in enumerate(selected):
         convention = "漫展" in item["venue"] or "同人展" in item["venue"]
         item["direct_gaze"] = direct[index]
@@ -239,6 +274,19 @@ def assign_batch_flags(selected: list[dict[str, Any]], rng: random.Random) -> No
         item["cos_mode"] = convention or rng.random() < 0.10
         item["aspect_ratio"] = rng.choices(RATIOS, weights=RATIO_WEIGHTS, k=1)[0]
         item["emotion"] = rng.choice(EMOTIONS)
+
+        if is_static_standing(item):
+            if static_full_body_used < static_full_body_budget and rng.random() < 0.35:
+                item["framing"] = "全身"
+                static_full_body_used += 1
+            else:
+                item["framing"] = rng.choice(("半身", "膝上", "七分身"))
+        else:
+            item["framing"] = rng.choices(
+                ("胸像", "半身", "膝上", "七分身", "全身"),
+                weights=(10.0, 26.0, 28.0, 26.0, 10.0),
+                k=1,
+            )[0]
 
 
 def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
@@ -256,6 +304,16 @@ def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "pose_families": dict(Counter(item["pose_family"] for item in selected)),
         "direct_gaze": sum(bool(item["direct_gaze"]) for item in selected),
+        "non_gaze_consecutive_pairs": sum(
+            (not bool(selected[index - 1]["direct_gaze"])) and (not bool(selected[index]["direct_gaze"]))
+            for index in range(1, len(selected))
+        ),
+        "static_standing": sum(is_static_standing(item) for item in selected),
+        "static_standing_full_body": sum(
+            is_static_standing(item) and item.get("framing") == "全身" for item in selected
+        ),
+        "pose_activity_pairs": len({(item["pose_family"], item["activity"]) for item in selected}),
+        "framing": dict(Counter(item.get("framing", "") for item in selected)),
         "companion_camera": sum(bool(item["companion_camera"]) for item in selected),
         "cos_mode": sum(bool(item["cos_mode"]) for item in selected),
         "aspect_ratios": dict(Counter(item["aspect_ratio"] for item in selected)),
