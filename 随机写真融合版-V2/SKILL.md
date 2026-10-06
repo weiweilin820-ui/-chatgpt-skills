@@ -7,6 +7,20 @@ description: Generate long-form director-card prompts for realistic portraits of
 
 Create production-ready Chinese director cards while preserving the referenced adult character's identity. Treat every depicted person as an adult aged 23 or older. Produce prompts only; do not generate images unless the user separately requests image generation.
 
+## Rule precedence and non-negotiables
+
+Resolve conflicts in this order: **the user's latest explicit instruction in the current conversation → this section → the rest of `SKILL.md` → reference files → examples**. Examples never override a hard rule. When two references disagree, use the newer/higher-priority rule from this file instead of blending both.
+
+Hard invariants for this skill:
+- This is a **prompt-writing skill**. Do not call image generation unless the user explicitly asks to create an image.
+- The depicted main character is always an adult aged 23+ and identity consistency has priority over styling novelty.
+- All shoulder construction remains bilaterally balanced: no single-shoulder, diagonal-shoulder, one-sleeve-only, or asymmetric shoulder opening.
+- All leather / faux-leather garments are excluded. Dark green, caramel, the removed silver reflective bodysuit, and short/ankle hosiery are excluded.
+- **Waist/abdomen rule:** do not use side-waist cutouts, waist cutout panels, abdominal holes, or small localized waist openings. When a sexy waist treatment is selected, use a cropped construction that lets the **waist and abdomen read as one continuous, naturally flowing area**; write it as “腰腹完整呈现，线条流畅自然” rather than “腰侧小面积镂空”.
+- Sexy styling must come from the garment silhouette itself, not from hosiery, heels, color, tightness, or the word “性感”.
+- Artistic finishes may layer in a controlled way; identity, face clarity, anatomy, and the main action remain readable.
+
+
 ## Load the required references
 
 Read these files before composing any card:
@@ -30,7 +44,6 @@ Load the following only when the selected mode needs them:
 - COS: `references/cos角色池.md`
 - Candid mode: `references/同行者纪实抓拍.md`
 - Profession or uniform POV: `references/职业制服POV批产.md`
-- Preset packs: `references/主题包.md`
 
 ## Interpret the request
 
@@ -40,9 +53,12 @@ Load the following only when the selected mode needs them:
 - If reference images are unavailable in the current turn, still write the identity-lock clause so the prompt can be paired with them later; do not invent facial traits.
 - Never create a standalone `表情` heading. Treat emotion as an independent creative variable governed by `references/情绪表达.md`. Write only a concise emotion state inside `场景与动作` (for example 开心、惊喜、憔悴、难过、惊慌、困惑、无奈); do not micro-direct facial muscles such as mouth corners, teeth, eyebrow height, eye opening, cheek lift, or exact lip shape. If the user explicitly supplies an emotion, preserve that emotion rather than replacing it with a different one.
 - Do not ask follow-up questions when a coherent random card can be generated safely.
+- Treat a user-specified theme as a live constraint, **not as a preset pack**. Build it from the same scene/outfit/action/camera pools at generation time. Do not load or emulate deleted theme-package prose.
+- “整个池子随机 / 完全随机 / 重新随机” means independently re-draw both the **scene tuple and the outfit tuple**. It is not valid to keep the same garment silhouette and merely change color, hosiery, material wording, or venue.
+
 - Apply later user rules over older rules. Current hard exclusions: all leather garments, dark green, caramel, the removed silver reflective bodysuit, and all short socks / ankle-length hosiery (`短袜`, `短筒袜`, `短筒丝袜`, `船袜`, `踝袜`). If hosiery is used, start from `中筒` or longer.
 - Draw clothing colors from the complete palette in `references/变量池-服装场景.md`: rainbow pastels, vivid colors, wine red and other clean deep tones, black, white, pure gray, metallics, and color contrasts. Do not treat light-colored tops as a default constraint.
-- For this user's portrait batches, sexify ordinary garments as well as special fashion pieces. Do not output an unchanged conservative shirt, sweater, hoodie, suit, sports uniform, historical outfit, or homewear set. Give each outfit one dominant skin-revealing structure plus one secondary structure, chosen from an open neckline, relaxed/off-shoulder line, open back, side-waist cutout, cropped waist, low-rise bottom, or short-skirt/shorts proportion. Keep the result wearable and fashion-led.
+- For this user's portrait batches, sexify ordinary garments as well as special fashion pieces. Do not output an unchanged conservative shirt, sweater, hoodie, suit, sports uniform, historical outfit, or homewear set. Give each outfit one dominant skin-revealing structure plus one secondary structure, chosen from an open neckline, balanced off-shoulder line, open back, cropped construction with the waist/abdomen fully and continuously visible, low-rise bottom, short-skirt/shorts proportion, or a genuinely high slit. Do not use side-waist cutouts or abdominal cutout panels. Keep the result wearable and fashion-led.
 - If the user reports the generated bust looks too small, explicitly anchor the adult figure to the reference proportions and visually natural E–F fullness; use correctly fitted seams and drape to preserve its volume. Do not exaggerate anatomy or turn the shot into a chest close-up.
 - The user's preferred candid camera language is an ordinary companion or event photographer capturing a natural moment. In generated cards and their negative prompts, omit expressions including “偷拍”“偷摄”“监视”“窥视”; use “同行者随手拍”“自然抓拍”“刚抬起手机记录的一帧” and a plausible camera position instead.
 
@@ -52,7 +68,7 @@ For each card, independently sample:
 
 `director route × scene domain × spatial archetype × specific location × outfit family × top silhouette × bottom/one-piece silhouette × dominant material × activity × pose family × emotion state × hosiery eligibility × optional leg styling × required artistic finish × lighting × color × camera angle × framing × image quality`
 
-For random batches, actually draw choices using an available random-number generator (for example Python `secrets.SystemRandom`), following `references/场景抽样机制.md`. Do not cycle through a memorized sequence, take one venue from every category in order, or select only familiar example locations. Draw the scene domain, then the spatial archetype, then the specific venue so long lists of modern streets and travel landmarks cannot drown out unusual settings. Draw outfit family, top silhouette, bottom or one-piece silhouette, and dominant material separately before styling them as a coherent set. Follow the aspect-ratio weights in `references/变量池-摄影语言.md`, unless the user specifies a ratio. When the recent batch is visible, exclude its repeated spatial structures, specific venues, venue–activity patterns, and outfit silhouettes before sampling. If prior output is unavailable, say nothing about historical exclusions and only deduplicate what is visible.
+For random batches, actually draw choices using an available random-number generator (for example Python `secrets.SystemRandom`), following `references/场景抽样机制.md`. Do not cycle through a memorized sequence, take one venue from every category in order, or select only familiar example locations. Draw the scene domain, then the spatial archetype, then the specific venue so long lists of modern streets and travel landmarks cannot drown out unusual settings. Draw outfit family, top silhouette, bottom or one-piece silhouette, and dominant material separately before styling them as a coherent set. Outfit diversity is structural: changing only color/material/hosiery does not count as a new outfit. For a general batch, actively rotate among two-piece looks, one-piece mini dresses, short qipao/new-Chinese silhouettes, sports sets, tailored short suits, swimwear/holiday looks, fantasy/COS-derived cuts, and fitted high-slit long silhouettes where physically appropriate. Follow the aspect-ratio weights in `references/变量池-摄影语言.md`, unless the user specifies a ratio. When the recent batch is visible, exclude its repeated spatial structures, specific venues, venue–activity patterns, and outfit silhouettes before sampling. If prior output is unavailable, say nothing about historical exclusions and only deduplicate what is visible.
 
 ### Start-from-zero batch procedure
 
@@ -64,6 +80,8 @@ When the user says “从 0 开始”“重新抽”“完整随机” or report
 4. Run `python3 scripts/select_batch.py --input <candidate.json> --output <selected.json> --count <N>`. Use `--seed` only when the user asks for a reproducible draw.
 5. Write cards only from `selected.json`. Treat its `direct_gaze`, `companion_camera`, `cos_mode`, `aspect_ratio`, and `framing` fields as binding unless they conflict with an explicit user instruction.
 6. Read the emitted `audit`. If unique venues or outfit fingerprints are below the requested count, if adjacent fingerprint distance is below four, or if the pose/domain coverage is poor for a general random batch, expand the candidate pool and rerun instead of repairing cards by paraphrase.
+7. Run a final hard-rule audit before prose: reject any selected plan containing leather/faux leather, dark green, caramel, forbidden shoulder asymmetry, short/ankle hosiery, side-waist/abdominal cutouts, or a repeated outfit silhouette disguised by color changes. Also reject any plan whose framing/action contradicts the direct-gaze or static-standing limits.
+
 
 For fewer than 5 cards, the script is optional, but the same semantic fingerprint and compatibility rules still apply. For batches of 5–9 cards, run the same selector/audit so small batches do not collapse into repeated pose-action templates. Mandatory identity, body, skin, and negative-prompt text is expected to repeat and must be excluded from similarity judgments.
 
@@ -82,10 +100,25 @@ Then run a compatibility pass:
 10. For travel and everyday scenes, draw a meaningful activity from `references/场景名词池.md` sections 44–46, pair it with one place-specific object, and catch a moment mid-action. Vary boating, picnicking, running, cycling, safely stopping an electric scooter, making art, dancing, cooking, and using mirrors; avoid repeated stationary landmark poses. Let a glance meet the lens without interrupting the action when the sampled gaze is direct. Choose practical shoes and gear when an activity demands them.
 11. Finish and approve the clothing silhouette before drawing leg styling. First reject an unchanged midi skirt, ordinary long skirt, wide-leg trousers, loose full-length trousers, or other conservative lower-body silhouette; resample it or convert it into a mini, fitted shorts, a genuinely high-slit fitted long skirt, fitted ripped denim, or another fashion-led silhouette. Then determine hosiery eligibility from outfit, activity, weather, framing and footwear. Use the three-way leg-styling distribution and compatibility matrix in `references/变量池-服装场景.md`; hosiery is optional, never a repair for an unattractive outfit. Draw the hosiery family first and its compatible color second. Gray-purple or lavender hosiery is a low-frequency accent, not a neutral fallback. Do not make hosiery a body-part close-up. Garment shapes and color samples are independent: the loose draped deep-V chiffon top retains its cut and fabric description while its color varies freely.
 12. Draw at least one named artistic finish from `references/变量池-摄影语言.md` for every card. Artistic finishes may be layered: normally use **one primary finish plus zero or one secondary finish**, and allow up to three only when the user explicitly requests a denser combination. The primary finish must remain visually dominant; secondary finishes must add a different physical mechanism rather than restating the same bloom, haze, reflection, or projection. Make every selected finish physically legible through plausible light, shadow, reflection, projection, window, plant shadow, water reflection, translucent curtain, shallow-depth foreground, motion, or optical diffusion. Keep the real person's face and figure clearly visible; shadows, paintings, and reflections may echo or visually interact with her but may not become extra physical people. Companion-camera mode may also use `花影朦胧` or `隔帘见人` when blurred plants remain light and peripheral or the curtain is translucent enough to preserve facial features and body contours. Never place opaque fabric, dense foliage, or a large foreground object over the face, torso, or main action.
-13. Build the top and bottom as one coordinated outfit rather than two independent random nouns. Run the silhouette-and-material audit, sensuality gate, hosiery audit and outfit fingerprint cooldown in `references/变量池-服装场景.md`: one visual focal point, compatible waist heights, balanced fabric weight, controlled transparency, and no competing all-over lace, metallic shine, print, and chains. Require one dominant skin-revealing structure plus one secondary structure before allowing hosiery to be added. A color, print, hosiery, shoe, or accessory change does not make a repeated silhouette new.
+13. Build the top and bottom as one coordinated outfit rather than two independent random nouns. Run the silhouette-and-material audit, sensuality gate, hosiery audit and outfit fingerprint cooldown in `references/变量池-服装场景.md`: one visual focal point, compatible waist heights, balanced fabric weight, controlled transparency, and no competing all-over lace, metallic shine, print, and chains. Require one dominant skin-revealing structure plus one secondary structure before allowing hosiery to be added. If the waist is the dominant reveal, it must be a continuous cropped-waist treatment: `腰腹完整呈现，线条流畅自然`; localized side-waist or abdominal cutouts are rejected. A color, print, hosiery, shoe, or accessory change does not make a repeated silhouette new.
 14. Before prose writing, store one internal fingerprint per card: `scene domain｜spatial archetype｜venue/facility｜activity｜outfit family｜top silhouette｜bottom/one-piece silhouette｜dominant material｜artistic finish`. Also store a separate pose/action fingerprint: `pose family｜hand action｜body orientation｜task vs pure pose｜selfie/mirror/candid state`. Reject batches that repeat the same body-and-hand template even when venue and props differ. Reject a candidate that is too close to another card in the current batch or the recent visible batch. Adjacent cards must differ in at least four fingerprint fields. If compatibility fails, resample only the conflicting field; never normalize the candidate into the same familiar corridor, short top, mini skirt, or static landmark pose used nearby.
 
 For long batches, sample the scene plan with a real random generator and treat compatibility and exact-duplicate rejection as constraints. Do not claim mathematically uniform complete prompts: the final wording still needs creative writing and physical plausibility.
+
+## Final validation gate
+
+Before emitting any card, verify all of the following. If one fails, repair the **plan**, not just the prose:
+
+1. Identity lock, age, anatomy and face scale are intact.
+2. The scene/activity is physically coherent and not a recent visible near-duplicate.
+3. The outfit silhouette is genuinely different from neighboring/recent cards; color-only changes do not count.
+4. No forbidden garment/material/color/hosiery/shoulder structure appears.
+5. If the waist is exposed, it is continuous and natural: “腰腹完整呈现，线条流畅自然”; no localized waist/abdominal cutout.
+6. The outfit itself passes the sensuality gate before hosiery/shoes/accessories are considered.
+7. Gaze, framing and pose obey the ~80% direct-gaze target and low-frequency static standing full-body rule.
+8. Artistic effects have clear primary/secondary physical mechanisms and do not obscure the face or create extra physical people.
+9. The ten required headings are present exactly once in detailed cards; no separate expression/gaze heading is added.
+10. Prompt-writing requests remain text-only. Never invoke image generation implicitly.
 
 ## Default to the detailed ten-block director-card format
 
