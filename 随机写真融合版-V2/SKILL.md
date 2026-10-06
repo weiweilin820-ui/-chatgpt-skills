@@ -114,7 +114,7 @@ Use these headings in order:
 7. `场景与动作` — specific place + pure action + body pose/head direction + gaze + concise emotion state + unforced moment
 8. `光线与色彩`
 9. `摄影质感` — capture quality + lens + camera angle + explicit subject occupancy + the required named artistic finish with a clearly legible face + refined editorial atmosphere without commercial studio polish
-10. `负面提示词`
+10. `负面提示词` — Keep negative prompts compact: include the stable global identity/anatomy/render exclusions plus only the card-specific failure modes. Do not pad them with repeated synonyms or restate the same prohibition three ways.
 
 Do not add a standalone gaze section. Avoid blunt phrases such as “露出……” when describing styling; express visible skin through design language such as “肩颈与锁骨线条清晰”“腰侧线条清晰”“背部线条完整”“腿部比例得到延展”. Do not append stock disclaimers like “完整穿着、不暴露内衣、不走光” unless the user explicitly asks for them; enforce those constraints silently through garment construction and the negative prompt.
 
