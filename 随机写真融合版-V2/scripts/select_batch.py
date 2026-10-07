@@ -25,6 +25,7 @@ REQUIRED_FIELDS = (
     "facility",
     "activity",
     "pose_family",
+    "outfit_architecture",
     "outfit_family",
     "top_silhouette",
     "bottom_silhouette",
@@ -37,6 +38,7 @@ FINGERPRINT_FIELDS = (
     "spatial_archetype",
     "venue",
     "activity",
+    "outfit_architecture",
     "outfit_family",
     "top_silhouette",
     "bottom_silhouette",
@@ -45,6 +47,7 @@ FINGERPRINT_FIELDS = (
 )
 
 OUTFIT_FIELDS = (
+    "outfit_architecture",
     "outfit_family",
     "top_silhouette",
     "bottom_silhouette",
@@ -74,6 +77,11 @@ FORBIDDEN_GARMENT_TERMS = (
 FORBIDDEN_WAIST_CUTOUT_TERMS = (
     "腰侧小面积镂空", "腰侧镂空", "侧腰镂空", "腹部镂空", "腰部镂空",
     "腰侧开口", "侧腰开口", "腹部开口", "腰部局部切口", "腰侧裁片", "侧腰裁片",
+)
+
+CROPPED_TWO_PIECE_TERMS = (
+    "露腰两件套", "短上衣＋短裙", "短上衣+短裙", "短上衣＋短裤", "短上衣+短裤",
+    "运动分体套装", "新中式两件套", "古风两件套", "新中式 / 古风两件套",
 )
 
 
@@ -132,6 +140,22 @@ def has_forbidden_waist_cutout(candidate: dict[str, Any]) -> bool:
     text = candidate_wardrobe_text(candidate)
     return any(term in text for term in FORBIDDEN_WAIST_CUTOUT_TERMS)
 
+
+def architecture_target(count: int) -> int:
+    if count >= 50:
+        return 10
+    if count >= 20:
+        return 8
+    if count >= 10:
+        return 6
+    if count >= 5:
+        return 4
+    return min(count, 3)
+
+
+def is_cropped_two_piece(candidate: dict[str, Any]) -> bool:
+    architecture = clean(candidate.get("outfit_architecture", ""))
+    return any(term in architecture for term in CROPPED_TWO_PIECE_TERMS)
 
 def is_long_denim(candidate: dict[str, Any]) -> bool:
     text = clean(candidate.get("bottom_silhouette", ""))
@@ -200,10 +224,31 @@ def select(candidates: list[dict[str, Any]], count: int, rng: random.Random) -> 
             f"only {len(remaining)} unique semantic fingerprints remain for {count} requested plans"
         )
 
+    target_architectures = architecture_target(count)
+    eligible_architectures = {
+        item["outfit_architecture"]
+        for item in remaining
+        if not has_forbidden_shoulder(item)
+        and not has_forbidden_garment(item)
+        and not has_forbidden_waist_cutout(item)
+        and not has_short_hosiery(item)
+        and not ambiguous_hosiery(item)
+    }
+    if len(eligible_architectures) < target_architectures:
+        raise RuntimeError(
+            f"candidate pool has only {len(eligible_architectures)} eligible macro outfit architectures; "
+            f"need at least {target_architectures} for a batch of {count}"
+        )
+
     rng.shuffle(remaining)
     selected: list[dict[str, Any]] = []
     used_venues: set[str] = set()
     used_outfits: set[tuple[str, ...]] = set()
+    used_architectures: set[str] = set()
+    architecture_counts: Counter[str] = Counter()
+    cropped_two_piece_count = 0
+    cropped_two_piece_limit = max(1, (count * 2 + 4) // 5)
+    per_architecture_cap = max(2, (count + 3) // 4)
     field_counts = {field: Counter() for field in FINGERPRINT_FIELDS}
     pose_counts: Counter[str] = Counter()
     long_denim_count = 0
@@ -232,6 +277,17 @@ def select(candidates: list[dict[str, Any]], count: int, rng: random.Random) -> 
                 continue
             if is_long_trouser(item) and long_trouser_count >= max(1, round(count * 0.02)):
                 continue
+            architecture = item["outfit_architecture"]
+            if architecture_counts[architecture] >= per_architecture_cap:
+                continue
+            if len(selected) >= 2 and selected[-1]["outfit_architecture"] == architecture and selected[-2]["outfit_architecture"] == architecture:
+                continue
+            if is_cropped_two_piece(item) and cropped_two_piece_count >= cropped_two_piece_limit:
+                continue
+            unseen_needed = max(0, target_architectures - len(used_architectures))
+            remaining_slots = count - len(selected)
+            if unseen_needed >= remaining_slots and architecture in used_architectures:
+                continue
             viable.append(item)
 
         if not viable:
@@ -251,6 +307,10 @@ def select(candidates: list[dict[str, Any]], count: int, rng: random.Random) -> 
         remaining.remove(chosen)
         used_venues.add(chosen["venue"])
         used_outfits.add(outfit_fingerprint(chosen))
+        used_architectures.add(chosen["outfit_architecture"])
+        architecture_counts[chosen["outfit_architecture"]] += 1
+        if is_cropped_two_piece(chosen):
+            cropped_two_piece_count += 1
         for field in FINGERPRINT_FIELDS:
             field_counts[field][chosen[field]] += 1
         pose_counts[chosen["pose_family"]] += 1
@@ -336,6 +396,10 @@ def audit(selected: list[dict[str, Any]]) -> dict[str, Any]:
         "outfit_pairings": len(
             {(item["top_silhouette"], item["bottom_silhouette"]) for item in selected}
         ),
+        "unique_outfit_architectures": len({item["outfit_architecture"] for item in selected}),
+        "outfit_architectures": dict(Counter(item["outfit_architecture"] for item in selected)),
+        "cropped_two_piece_architectures": sum(is_cropped_two_piece(item) for item in selected),
+        "architecture_target": architecture_target(len(selected)),
         "pose_families": dict(Counter(item["pose_family"] for item in selected)),
         "direct_gaze": sum(bool(item["direct_gaze"]) for item in selected),
         "non_gaze_consecutive_pairs": sum(
